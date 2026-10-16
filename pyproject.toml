@@ -1,0 +1,10 @@
+[project]
+name = "seoul-jeonse-dashboard"
+version = "0.1.0"
+description = "서울 자치구별 아파트 전세 변화 대시보드"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = ["workers-py", "workers-runtime-sdk"]
+
