@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fa">
+    <meta name="description" content="서울 자치구별 아파트 전세 보증금과 거래량의 최근 3년 변화">
+    <title>서울 전세 인사이트</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="서울 전세 인사이트 홈">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span>SEOUL <b>HOUSING DATA</b></span>
+        </a>
+        <span class="source-chip"><span class="live-dot"></span> 서울시 열린데이터광장 API</span>
+      </header>
+
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">SEOUL RENTAL MARKET · APARTMENT JEONSE</p>
+          <h1 id="page-title">서울 전세 인사이트</h1>
+          <p class="hero-subtitle">우리 동네 아파트 전세 시장은 어떻게 움직이고 있을까요?</p>
+        </div>
+        <div class="district-control">
+          <label for="district-select">자치구 선택</label>
+          <div class="select-wrap">
+            <select id="district-select" aria-describedby="district-help" disabled>
+              <option>자치구 불러오는 중</option>
+            </select>
+            <span class="select-chevron" aria-hidden="true">⌄</span>
+          </div>
+          <span id="district-help" class="control-hint">서울 25개 자치구 · 아파트 전세</span>
+        </div>
+      </section>
+
+      <section class="status-line" aria-live="polite">
+        <span class="status-icon" aria-hidden="true">↗</span>
+        <span id="status-text">데이터를 불러오는 중입니다.</span>
+        <span id="updated-at" class="updated-at"></span>
+      </section>
+
+      <section class="kpi-grid" aria-label="선택 자치구 요약 지표">
+        <article class="kpi-card kpi-primary">
+          <div class="kpi-top"><span>최근 3년 거래</span><span class="kpi-icon">▦</span></div>
+          <strong id="transaction-count" class="kpi-value">—</strong>
+          <span class="kpi-caption">건 · 계약 자료 기준</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-top"><span>보증금 중앙값</span><span class="kpi-icon">₩</span></div>
+          <strong id="median-deposit" class="kpi-value">—</strong>
+          <span class="kpi-caption">선택 기간 아파트 전세</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-top"><span>최근 연도 변화</span><span class="kpi-icon">↗</span></div>
+          <strong id="yoy-change" class="kpi-value">—</strong>
+          <span id="yoy-caption" class="kpi-caption">전년 대비 보증금 중앙값</span>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-top"><span>면적당 보증금 중앙값</span><span class="kpi-icon">㎡</span></div>
+          <strong id="per-sqm" class="kpi-value">—</strong>
+          <span class="kpi-caption">만원 / ㎡</span>
+        </article>
+      </section>
+
+      <section id="empty-state" class="empty-state" hidden>
+        <span class="empty-mark" aria-hidden="true">⌕</span>
+        <h2>표시할 거래가 없습니다</h2>
+        <p>선택한 자치구의 최근 제공 기간에 해당하는 아파트 전세 거래가 없습니다.</p>
+      </section>
+
+      <section class="chart-grid" aria-label="전세 거래 변화 차트">
+        <article class="chart-card chart-wide">
+          <div class="chart-heading">
+            <div><p class="chart-kicker">DEPOSIT TREND</p><h2>월별 보증금 흐름</h2></div>
+            <span class="chart-unit">중앙값 · 억원</span>
+          </div>
+          <div id="monthly-chart" class="chart-area" role="img" aria-label="월별 보증금 중앙값 차트"></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-heading">
+            <div><p class="chart-kicker">TRANSACTIONS</p><h2>연도별 거래량</h2></div>
+            <span class="chart-unit">건</span>
+          </div>
+          <div id="yearly-chart" class="chart-area chart-area-compact" role="img" aria-label="연도별 거래 건수 차트"></div>
+        </article>
+      </section>
+
+      <footer class="page-footer">
+        <p>출처: 서울시 열린데이터광장 「서울시 부동산 전월세가 정보」 OpenAPI</p>
+        <p>아파트 전세 실거래 요약 통계이며, 계약 조건과 면적 구성에 따라 값이 달라질 수 있습니다.</p>
+      </footer>
+    </main>
+  </body>
+</html>
+
