@@ -38,7 +38,7 @@ Cloudflare Python Worker는 열린데이터광장 OpenAPI에 서버 측에서 �
 
 Cloudflare 계정으로 인증한 뒤 Worker Secret으로 키를 등록하고 배포합니다.
 
-GitHub 연동 빌드를 쓰는 경우 Workers 설정에서 저장소 `alice1413/assignment2`, 브랜치 `main`, Root directory `.`를 지정하세요. Worker 이름은 `seoulrent`이며 `wrangler.jsonc`의 `name`과 같아야 합니다. Python Worker를 빌드하려면 Deploy command를 `uv run pywrangler deploy`로 설정하세요.
+GitHub 연동 빌드를 쓰는 경우 Workers 설정에서 저장소 `alice1413/assignment2`, 브랜치 `main`, Root directory `.`를 지정하세요. Worker 이름은 `assignment02`이며 `wrangler.jsonc`의 `name`과 같아야 합니다. Python Worker를 빌드하려면 Deploy command를 `uv run pywrangler deploy`로 설정하세요.
 
 ```powershell
 uv run pywrangler secret put SEOUL_API_KEY
