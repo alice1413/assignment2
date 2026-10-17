@@ -1,7 +1,7 @@
 import json
 import math
 from datetime import datetime
-from urllib.parse import quote, urlencode
+from urllib.parse import quote
 
 from js import fetch
 
@@ -32,14 +32,15 @@ async def _request_page(
     if district_code is None:
         raise SeoulApiError("올바르지 않은 자치구입니다.")
     key_path = quote(api_key, safe="")
-    # Filter at the API so only one district, one registration year, and apartments
-    # are paginated and transferred to the Worker.
-    filters = urlencode(
-        {"RCPT_YR": str(year), "CGG_CD": district_code, "BLDG_USG": "아파트"}
-    )
+    # Seoul OpenAPI filters are positional path segments. Query-string filters
+    # are ignored by this service and can accidentally request the full dataset.
+    optional_params = [
+        str(year), district_code, "", "", "", "", "", "", "", "아파트"
+    ]
+    optional_path = "/".join(quote(value, safe="") for value in optional_params)
     url = (
-        f"{BASE_URL}/{key_path}/json/{SERVICE}/{start}/{end}"
-        f"?{filters}"
+        f"{BASE_URL}/{key_path}/json/{SERVICE}/{start}/{end}/"
+        f"{optional_path}"
     )
     try:
         response = await fetch(url)
