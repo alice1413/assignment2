@@ -9,7 +9,7 @@ from js import fetch
 BASE_URL = "http://openapi.seoul.go.kr:8088"
 SERVICE = "tbLnOpendataRentV"
 PAGE_SIZE = 1000
-MAX_PAGES_PER_REQUEST = 40
+MAX_PAGES_PER_REQUEST = 49
 DISTRICT_CODES = {
     "종로구": "11110", "중구": "11140", "용산구": "11170", "성동구": "11200",
     "광진구": "11215", "동대문구": "11230", "중랑구": "11260", "성북구": "11290",
