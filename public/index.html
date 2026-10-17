@@ -3,97 +3,191 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f5f7fa">
-    <meta name="description" content="서울 자치구별 아파트 전세 보증금과 거래량의 최근 3년 변화">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="서울 전체와 25개 자치구 아파트 전세 시장의 최근 3년 변화">
     <title>서울 전세 인사이트</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/styles.css">
     <script src="/app.js" defer></script>
   </head>
   <body>
-    <main class="page-shell">
-      <header class="topbar">
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
         <a class="brand" href="/" aria-label="서울 전세 인사이트 홈">
           <span class="brand-mark" aria-hidden="true">S</span>
-          <span>SEOUL <b>HOUSING DATA</b></span>
+          <span class="brand-copy"><strong>SEOUL</strong><small>HOUSING DATA</small></span>
         </a>
-        <span class="source-chip"><span class="live-dot"></span> 서울시 API 사전 집계 자료</span>
-      </header>
-
-      <section class="hero" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <p class="eyebrow">SEOUL RENTAL MARKET · APARTMENT JEONSE</p>
-          <h1 id="page-title">서울 전세 인사이트</h1>
-          <p class="hero-subtitle">우리 동네 아파트 전세 시장은 어떻게 움직이고 있을까요?</p>
+        <div class="sidebar-section">
+          <p class="sidebar-label">MARKET</p>
+          <nav class="main-nav" aria-label="주요 메뉴">
+            <button class="nav-item is-active" type="button" data-view="dashboard" aria-current="page">
+              <span class="nav-icon" aria-hidden="true">▦</span><span>Dashboard</span>
+            </button>
+            <button class="nav-item" type="button" data-view="analysis">
+              <span class="nav-icon" aria-hidden="true">▥</span><span>Analysis</span>
+            </button>
+          </nav>
         </div>
-        <div class="district-control">
-          <label for="district-select">자치구 선택</label>
-          <div class="select-wrap">
-            <select id="district-select" aria-describedby="district-help" disabled>
-              <option>자치구 불러오는 중</option>
-            </select>
-            <span class="select-chevron" aria-hidden="true">⌄</span>
-          </div>
-          <span id="district-help" class="control-hint">서울 25개 자치구 · 아파트 전세</span>
+        <div class="sidebar-note">
+          <span class="note-dot" aria-hidden="true"></span>
+          <div><strong>서울 아파트 전세</strong><small>최근 3년 사전 집계 자료</small></div>
         </div>
-      </section>
+        <div class="sidebar-bottom">
+          <p class="sidebar-label">DATA SOURCE</p>
+          <p>서울시 열린데이터광장<br>부동산 전월세가 정보</p>
+          <span id="sidebar-period">자료 준비 중</span>
+        </div>
+      </aside>
 
-      <section class="status-line" aria-live="polite">
-        <span class="status-icon" aria-hidden="true">↗</span>
-        <span id="status-text">데이터를 불러오는 중입니다.</span>
-        <span id="updated-at" class="updated-at"></span>
-      </section>
+      <div class="main-shell">
+        <header class="topbar">
+          <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false">
+            <span></span><span></span>
+          </button>
+          <div class="breadcrumb"><span class="breadcrumb-mark" aria-hidden="true">▦</span><span id="topbar-title">Dashboard</span></div>
+          <div class="topbar-meta"><span class="source-chip"><span class="source-dot"></span>사전 집계 자료</span><span id="updated-at" class="updated-at">—</span></div>
+        </header>
 
-      <section class="kpi-grid" aria-label="선택 자치구 요약 지표">
-        <article class="kpi-card kpi-primary">
-          <div class="kpi-top"><span>최근 3년 거래</span><span class="kpi-icon">▦</span></div>
-          <strong id="transaction-count" class="kpi-value">—</strong>
-          <span class="kpi-caption">건 · 계약 자료 기준</span>
-        </article>
-        <article class="kpi-card">
-          <div class="kpi-top"><span>보증금 중앙값</span><span class="kpi-icon">₩</span></div>
-          <strong id="median-deposit" class="kpi-value">—</strong>
-          <span class="kpi-caption">선택 기간 아파트 전세</span>
-        </article>
-        <article class="kpi-card">
-          <div class="kpi-top"><span>최근 연도 변화</span><span class="kpi-icon">↗</span></div>
-          <strong id="yoy-change" class="kpi-value">—</strong>
-          <span id="yoy-caption" class="kpi-caption">전년 대비 보증금 중앙값</span>
-        </article>
-        <article class="kpi-card">
-          <div class="kpi-top"><span>면적당 보증금 중앙값</span><span class="kpi-icon">㎡</span></div>
-          <strong id="per-sqm" class="kpi-value">—</strong>
-          <span class="kpi-caption">만원 / ㎡</span>
-        </article>
-      </section>
+        <main class="content">
+          <section class="view-panel is-visible" id="view-dashboard" aria-labelledby="dashboard-title">
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">SEOUL RENTAL MARKET · APARTMENT JEONSE</p>
+                <h1 id="dashboard-title">서울 전세 Dashboard</h1>
+                <p class="page-subtitle">서울 아파트 전세 시장의 흐름을 한눈에 살펴봅니다.</p>
+              </div>
+              <span class="period-pill"><span class="period-dot"></span><span id="dashboard-period">최근 3년</span></span>
+            </div>
+            <div class="status-line" id="dashboard-status" aria-live="polite">사전 집계 자료를 불러오는 중입니다.</div>
 
-      <section id="empty-state" class="empty-state" hidden>
-        <span class="empty-mark" aria-hidden="true">⌕</span>
-        <h2>표시할 거래가 없습니다</h2>
-        <p>선택한 자치구의 최근 제공 기간에 해당하는 아파트 전세 거래가 없습니다.</p>
-      </section>
+            <section class="kpi-grid" aria-label="서울 전체 요약 지표">
+              <article class="kpi-card">
+                <div class="kpi-top"><span>최근 3년 거래</span><span class="kpi-icon teal">▦</span></div>
+                <strong id="city-count" class="kpi-value">—</strong>
+                <span class="kpi-caption">건 · 서울 전체 계약 자료</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>보증금 중앙값</span><span class="kpi-icon">₩</span></div>
+                <strong id="city-median" class="kpi-value">—</strong>
+                <span class="kpi-caption">전체 거래 기준 · 중앙값</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>최근 계약연도 변화</span><span class="kpi-icon orange">↗</span></div>
+                <strong id="city-yoy" class="kpi-value">—</strong>
+                <span id="city-yoy-caption" class="kpi-caption">전년 대비 중앙값</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>면적당 보증금</span><span class="kpi-icon">㎡</span></div>
+                <strong id="city-per-sqm" class="kpi-value">—</strong>
+                <span class="kpi-caption">만원 / ㎡ · 중앙값</span>
+              </article>
+            </section>
 
-      <section class="chart-grid" aria-label="전세 거래 변화 차트">
-        <article class="chart-card chart-wide">
-          <div class="chart-heading">
-            <div><p class="chart-kicker">DEPOSIT TREND</p><h2>월별 보증금 흐름</h2></div>
-            <span class="chart-unit">중앙값 · 억원</span>
-          </div>
-          <div id="monthly-chart" class="chart-area" role="img" aria-label="월별 보증금 중앙값 차트"></div>
-        </article>
-        <article class="chart-card">
-          <div class="chart-heading">
-            <div><p class="chart-kicker">TRANSACTIONS</p><h2>연도별 거래량</h2></div>
-            <span class="chart-unit">건</span>
-          </div>
-          <div id="yearly-chart" class="chart-area chart-area-compact" role="img" aria-label="연도별 거래 건수 차트"></div>
-        </article>
-      </section>
+            <section class="dashboard-grid" aria-label="서울 전체 전세 시장 차트">
+              <article class="panel panel-large">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">DEPOSIT TREND</p><h2>월별 보증금 흐름</h2><p class="panel-description">서울 전체 아파트 전세 계약 보증금 중앙값</p></div>
+                  <span class="chart-legend"><i class="legend-line teal"></i>보증금</span>
+                </div>
+                <div id="city-monthly-chart" class="chart-area" role="img" aria-label="서울 전체 월별 보증금 중앙값"></div>
+              </article>
+              <article class="panel">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">TRANSACTIONS</p><h2>연도별 거래량</h2><p class="panel-description">계약연도별 아파트 전세 거래 건수</p></div>
+                </div>
+                <div id="city-yearly-chart" class="chart-area chart-area-compact" role="img" aria-label="서울 전체 연도별 거래량"></div>
+              </article>
+              <article class="panel panel-table">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">DISTRICT OVERVIEW</p><h2>자치구별 전세 시장</h2><p class="panel-description">보증금 중앙값 기준 · 높은 순</p></div>
+                  <button class="text-button" type="button" data-go-view="analysis">구별 분석 보기 <span aria-hidden="true">→</span></button>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead><tr><th scope="col">자치구</th><th scope="col">보증금 중앙값</th><th scope="col">거래 건수</th><th scope="col">최근 연도 변화</th></tr></thead>
+                    <tbody id="district-ranking"><tr><td colspan="4" class="table-empty">자료를 불러오는 중입니다.</td></tr></tbody>
+                  </table>
+                </div>
+              </article>
+              <aside class="panel insight-panel">
+                <div class="insight-icon" aria-hidden="true">✓</div>
+                <p class="panel-kicker">DATA NOTE</p>
+                <h2>서울 전체 기준</h2>
+                <p>중앙값과 면적당 보증금은 자치구별 요약의 평균이 아니라, 서울 전체의 거래 자료를 모아 계산했습니다.</p>
+                <span id="city-data-date" class="insight-date">자료 기준일 —</span>
+              </aside>
+            </section>
+          </section>
 
-      <footer class="page-footer">
-        <p>출처: 서울시 열린데이터광장 「서울시 부동산 전월세가 정보」 OpenAPI</p>
-        <p>아파트 전세 실거래 요약 통계이며, 계약 조건과 면적 구성에 따라 값이 달라질 수 있습니다.</p>
-      </footer>
-    </main>
+          <section class="view-panel" id="view-analysis" aria-labelledby="analysis-title" hidden>
+            <div class="page-heading analysis-heading">
+              <div>
+                <p class="eyebrow">DISTRICT ANALYSIS · APARTMENT JEONSE</p>
+                <h1 id="analysis-title">자치구별 Analysis</h1>
+                <p class="page-subtitle">선택한 자치구의 보증금과 거래량 변화를 자세히 살펴봅니다.</p>
+              </div>
+              <div class="district-control">
+                <label for="district-select">자치구 선택</label>
+                <div class="select-wrap">
+                  <select id="district-select" disabled><option>자료 불러오는 중</option></select>
+                  <span class="select-chevron" aria-hidden="true">⌄</span>
+                </div>
+              </div>
+            </div>
+            <div class="status-line" id="analysis-status" aria-live="polite">자치구 자료를 불러오는 중입니다.</div>
+            <section class="kpi-grid" aria-label="선택 자치구 요약 지표">
+              <article class="kpi-card">
+                <div class="kpi-top"><span>최근 3년 거래</span><span class="kpi-icon teal">▦</span></div>
+                <strong id="transaction-count" class="kpi-value">—</strong>
+                <span class="kpi-caption">건 · 계약 자료 기준</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>보증금 중앙값</span><span class="kpi-icon">₩</span></div>
+                <strong id="median-deposit" class="kpi-value">—</strong>
+                <span class="kpi-caption">선택 기간 아파트 전세</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>최근 계약연도 변화</span><span class="kpi-icon orange">↗</span></div>
+                <strong id="yoy-change" class="kpi-value">—</strong>
+                <span id="yoy-caption" class="kpi-caption">전년 대비 보증금 중앙값</span>
+              </article>
+              <article class="kpi-card">
+                <div class="kpi-top"><span>면적당 보증금</span><span class="kpi-icon">㎡</span></div>
+                <strong id="per-sqm" class="kpi-value">—</strong>
+                <span class="kpi-caption">만원 / ㎡ · 중앙값</span>
+              </article>
+            </section>
+            <section id="empty-state" class="empty-state" hidden>
+              <span class="empty-mark" aria-hidden="true">⌕</span>
+              <h2>표시할 거래가 없습니다</h2>
+              <p>선택한 자치구의 최근 제공 기간에 해당하는 아파트 전세 거래가 없습니다.</p>
+            </section>
+            <section class="dashboard-grid analysis-grid" aria-label="자치구 전세 변화 차트">
+              <article class="panel panel-large">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">DEPOSIT TREND</p><h2>월별 보증금 흐름</h2><p class="panel-description">월별 아파트 전세 보증금 중앙값</p></div>
+                  <span class="chart-legend"><i class="legend-line teal"></i>보증금</span>
+                </div>
+                <div id="monthly-chart" class="chart-area" role="img" aria-label="선택 자치구 월별 보증금 중앙값"></div>
+              </article>
+              <article class="panel">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">TRANSACTIONS</p><h2>연도별 거래량</h2><p class="panel-description">계약연도별 아파트 전세 거래 건수</p></div>
+                </div>
+                <div id="yearly-chart" class="chart-area chart-area-compact" role="img" aria-label="선택 자치구 연도별 거래량"></div>
+              </article>
+            </section>
+          </section>
+
+          <footer class="page-footer">
+            <span>출처: 서울시 열린데이터광장 「서울시 부동산 전월세가 정보」 OpenAPI</span>
+            <span>아파트 전세 실거래 요약 통계 · 계약일 기준 최근 3년</span>
+          </footer>
+        </main>
+      </div>
+      <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="메뉴 닫기" tabindex="-1"></button>
+    </div>
   </body>
 </html>
-

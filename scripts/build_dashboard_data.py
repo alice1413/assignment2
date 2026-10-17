@@ -175,10 +175,16 @@ def main() -> None:
         district: build_district_summary(results[district], district)
         for district in DISTRICTS
     }
+    seoul_records = [
+        {**record, "district": "서울 전체"}
+        for district_records in results.values()
+        for record in district_records
+    ]
     output = {
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "years": years,
         "source": "서울시 열린데이터광장 서울시 부동산 전월세가 정보 OpenAPI",
+        "seoul": build_district_summary(seoul_records, "서울 전체"),
         "districts": summaries,
     }
     target = ROOT / "public" / "data" / "dashboard-summary.json"
