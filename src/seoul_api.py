@@ -1,6 +1,7 @@
 import json
 import math
-from urllib.parse import quote
+from datetime import datetime
+from urllib.parse import quote, urlencode
 
 from js import fetch
 
@@ -24,14 +25,22 @@ class SeoulApiError(Exception):
     """Raised when the Seoul OpenAPI response is missing or incomplete."""
 
 
-async def _request_page(api_key: str, start: int, end: int, district: str) -> dict:
+async def _request_page(
+    api_key: str, start: int, end: int, district: str, year: int
+) -> dict:
     district_code = DISTRICT_CODES.get(district)
     if district_code is None:
         raise SeoulApiError("올바르지 않은 자치구입니다.")
     key_path = quote(api_key, safe="")
-    # Seoul OpenAPI optional parameters follow START/END as path segments.
-    # RCPT_YR is intentionally empty; CGG_CD narrows the response to one district.
-    url = f"{BASE_URL}/{key_path}/json/{SERVICE}/{start}/{end}//{district_code}"
+    # Filter at the API so only one district, one registration year, and apartments
+    # are paginated and transferred to the Worker.
+    filters = urlencode(
+        {"RCPT_YR": str(year), "CGG_CD": district_code, "BLDG_USG": "아파트"}
+    )
+    url = (
+        f"{BASE_URL}/{key_path}/json/{SERVICE}/{start}/{end}"
+        f"?{filters}"
+    )
     try:
         response = await fetch(url)
         status = int(response.status)
@@ -106,25 +115,39 @@ def normalize_record(row: dict) -> dict | None:
 
 
 async def fetch_rent_records(api_key: str, district: str) -> list[dict]:
-    """Fetch every available recent-three-year row for one Seoul district."""
-    first = await _request_page(api_key, 1, PAGE_SIZE, district)
-    total = first["total"]
-    page_count = (total + PAGE_SIZE - 1) // PAGE_SIZE
-    if page_count > MAX_PAGES_PER_REQUEST:
-        raise SeoulApiError("선택한 구의 응답량이 Worker 요청 한도를 초과했습니다.")
-    if len(first["rows"]) != min(total, PAGE_SIZE):
-        raise SeoulApiError("서울시 OpenAPI 첫 페이지가 불완전합니다.")
-    records = [item for row in first["rows"] if (item := normalize_record(row))]
+    """Fetch recent-three-year apartment rent rows for one Seoul district."""
+    current_year = datetime.now().year
+    years = range(current_year - 2, current_year + 1)
+    records = []
+    pages_requested = 0
 
-    start = PAGE_SIZE + 1
-    while start <= total:
-        end = min(start + PAGE_SIZE - 1, total)
-        page = await _request_page(api_key, start, end, district)
-        if page["total"] != total or len(page["rows"]) != end - start + 1:
-            raise SeoulApiError("서울시 OpenAPI 페이지 수가 바뀌어 전체 자료를 보장할 수 없습니다.")
+    for year in years:
+        first = await _request_page(api_key, 1, PAGE_SIZE, district, year)
+        total = first["total"]
+        page_count = (total + PAGE_SIZE - 1) // PAGE_SIZE
+        if pages_requested + page_count > MAX_PAGES_PER_REQUEST:
+            raise SeoulApiError(
+                "아파트 최근 3년 자료가 Worker 조회 한도를 초과했습니다."
+            )
+        if len(first["rows"]) != min(total, PAGE_SIZE):
+            raise SeoulApiError("서울시 OpenAPI 첫 페이지가 불완전합니다.")
         records.extend(
-            item for row in page["rows"] if (item := normalize_record(row))
+            item for row in first["rows"] if (item := normalize_record(row))
         )
-        start = end + 1
+        pages_requested += 1
+
+        start = PAGE_SIZE + 1
+        while start <= total:
+            end = min(start + PAGE_SIZE - 1, total)
+            page = await _request_page(api_key, start, end, district, year)
+            if page["total"] != total or len(page["rows"]) != end - start + 1:
+                raise SeoulApiError(
+                    "서울시 OpenAPI 페이지 수가 바뀌어 전체 자료를 보장할 수 없습니다."
+                )
+            records.extend(
+                item for row in page["rows"] if (item := normalize_record(row))
+            )
+            pages_requested += 1
+            start = end + 1
 
     return records
