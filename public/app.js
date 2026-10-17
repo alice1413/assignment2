@@ -17,8 +17,8 @@ const formatNumber = (value) => new Intl.NumberFormat('ko-KR').format(value ?? 0
 
 async function getJson(url, options = {}) {
   const response = await fetch(url, {
-    headers: { Accept: 'application/json', ...(options.headers || {}) },
     ...options,
+    headers: { Accept: 'application/json', ...(options.headers || {}) },
   });
   let body;
   try {
@@ -87,7 +87,7 @@ function buildSummary(records, district) {
   for (const row of records) {
     const date = String(row.contract_date || '');
     const deposit = Number(row.deposit_manwon);
-    if (!/^\\d{8}$/.test(date) || !Number.isFinite(deposit) || deposit < 0) continue;
+    if (!/^\d{8}$/.test(date) || !Number.isFinite(deposit) || deposit < 0) continue;
     const year = date.slice(0, 4);
     const month = `${year}-${date.slice(4, 6)}`;
     deposits.push(deposit);
