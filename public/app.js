@@ -161,6 +161,43 @@ function renderDistrictRanking(districts) {
     : '전체 25개 보기 <span aria-hidden="true">→</span>';
 }
 
+function renderDistrictMovers(districts) {
+  const rows = Object.values(districts)
+    .filter((district) => district.deposit_yoy_percent != null)
+    .sort((a, b) => b.deposit_yoy_percent - a.deposit_yoy_percent);
+  const gainers = rows.filter((district) => district.deposit_yoy_percent > 0).slice(0, 8);
+  const decliners = rows.filter((district) => district.deposit_yoy_percent < 0).slice(-8).reverse();
+
+  const fillList = (target, items, className) => {
+    target.replaceChildren();
+    if (!items.length) {
+      const empty = document.createElement('li');
+      empty.className = 'mover-empty';
+      empty.textContent = '비교할 자료가 없습니다.';
+      target.append(empty);
+      return;
+    }
+    items.forEach((district, index) => {
+      const item = document.createElement('li');
+      item.className = 'mover-row';
+      const label = document.createElement('span');
+      label.className = 'mover-name';
+      label.innerHTML = `<span class="rank-number">${String(index + 1).padStart(2, '0')}</span>`;
+      const name = document.createElement('span');
+      name.textContent = district.district;
+      label.append(name);
+      const change = document.createElement('span');
+      change.className = `mover-change ${className}`;
+      change.textContent = formatYearChange(district);
+      item.append(label, change);
+      target.append(item);
+    });
+  };
+
+  fillList(document.querySelector('#district-gainers'), gainers, 'change-up');
+  fillList(document.querySelector('#district-decliners'), decliners, 'change-down');
+}
+
 function renderDashboard(data) {
   const summary = data.seoul;
   document.querySelector('#city-count').textContent = formatNumber(summary.transaction_count);
@@ -175,6 +212,7 @@ function renderDashboard(data) {
   renderLineChart(document.querySelector('#city-monthly-chart'), summary.monthly_median_deposit || []);
   renderBarChart(document.querySelector('#city-yearly-chart'), summary.yearly_transaction_count || []);
   renderDistrictRanking(data.districts || {});
+  renderDistrictMovers(data.districts || {});
   const years = summary.period?.contract_years || data.years || [];
   document.querySelector('#dashboard-period').textContent = years.length
     ? `${years[0]} — ${years.at(-1)}`

@@ -109,13 +109,22 @@
                   </table>
                 </div>
               </article>
-              <aside class="panel insight-panel">
-                <div class="insight-icon" aria-hidden="true">✓</div>
-                <p class="panel-kicker">DATA NOTE</p>
-                <h2>서울 전체 기준</h2>
-                <p>중앙값과 면적당 보증금은 자치구별 요약의 평균이 아니라, 서울 전체의 거래 자료를 모아 계산했습니다.</p>
-                <span id="city-data-date" class="insight-date">자료 기준일 —</span>
-              </aside>
+              <article class="panel movement-panel">
+                <div class="panel-heading">
+                  <div><p class="panel-kicker">YEAR-OVER-YEAR</p><h2>보증금 변화가 큰 자치구</h2><p class="panel-description">최근 계약연도와 직전 계약연도의 중앙값 비교</p></div>
+                </div>
+                <div class="movement-columns">
+                  <section class="mover-group">
+                    <h3 class="mover-heading change-up">상승 폭 큰 구</h3>
+                    <ol class="mover-list" id="district-gainers"></ol>
+                  </section>
+                  <section class="mover-group">
+                    <h3 class="mover-heading change-down">하락 폭 큰 구</h3>
+                    <ol class="mover-list" id="district-decliners"></ol>
+                  </section>
+                </div>
+                <div class="movement-footnote"><span>자치구별 연도 누적 중앙값 기준</span><span id="city-data-date">자료 기준일 —</span></div>
+              </article>
             </section>
           </section>
 
