@@ -15,8 +15,11 @@ const kpiFields = {
 const moneyInEok = (manwon) => manwon == null ? '자료 없음' : `${(manwon / 10000).toFixed(1)}억`;
 const formatNumber = (value) => new Intl.NumberFormat('ko-KR').format(value ?? 0);
 
-async function getJson(url) {
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
+async function getJson(url, options = {}) {
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json', ...(options.headers || {}) },
+    ...options,
+  });
   let body;
   try {
     body = await response.json();
@@ -27,6 +30,42 @@ async function getJson(url) {
     throw new Error(body?.error?.message || '데이터를 불러오지 못했습니다.');
   }
   return body;
+}
+
+const API_PAGE_SIZE = 1000;
+const PAGE_FETCH_CONCURRENCY = 4;
+
+async function loadDistrictRecords(district) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear - 2, currentYear - 1, currentYear];
+  statusText.textContent = '연도별 거래 자료의 양을 확인하고 있습니다.';
+
+  const firstPages = await Promise.all(years.map((year) =>
+    getJson(`/api/records?district=${encodeURIComponent(district)}&year=${year}&start=1`)
+  ));
+  const records = firstPages.flatMap((page) => page.records || []);
+  const pending = [];
+  for (const page of firstPages) {
+    for (let start = API_PAGE_SIZE + 1; start <= page.total; start += API_PAGE_SIZE) {
+      pending.push({ year: page.year, start });
+    }
+  }
+
+  const totalPages = firstPages.length + pending.length;
+  let completed = firstPages.length;
+  statusText.textContent = `${district} 아파트 전세 자료 수집 중 · ${completed}/${totalPages} 페이지`;
+
+  for (let index = 0; index < pending.length; index += PAGE_FETCH_CONCURRENCY) {
+    const batch = pending.slice(index, index + PAGE_FETCH_CONCURRENCY);
+    const pages = await Promise.all(batch.map(({ year, start }) =>
+      getJson(`/api/records?district=${encodeURIComponent(district)}&year=${year}&start=${start}`)
+    ));
+    for (const page of pages) records.push(...(page.records || []));
+    completed += pages.length;
+    statusText.textContent = `${district} 아파트 전세 자료 수집 중 · ${completed}/${totalPages} 페이지`;
+  }
+
+  return records;
 }
 
 function setLoading(isLoading) {
@@ -131,7 +170,13 @@ function renderSummary(summary) {
 async function loadDistrict(district) {
   setLoading(true);
   try {
-    const summary = await getJson(`/api/summary?district=${encodeURIComponent(district)}`);
+    const records = await loadDistrictRecords(district);
+    statusText.textContent = `${district} 자료 ${formatNumber(records.length)}건을 분석하고 있습니다.`;
+    const summary = await getJson('/api/summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ district, records }),
+    });
     renderSummary(summary);
   } catch (error) {
     showError(error.message || '데이터를 불러오지 못했습니다.');
