@@ -68,6 +68,68 @@ async function loadDistrictRecords(district) {
   return records;
 }
 
+function median(values) {
+  if (!values.length) return null;
+  const ordered = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2
+    ? ordered[middle]
+    : (ordered[middle - 1] + ordered[middle]) / 2;
+}
+
+function buildSummary(records, district) {
+  const monthlyValues = new Map();
+  const yearlyValues = new Map();
+  const perSqmValues = [];
+  const deposits = [];
+  const dates = [];
+
+  for (const row of records) {
+    const date = String(row.contract_date || '');
+    const deposit = Number(row.deposit_manwon);
+    if (!/^\\d{8}$/.test(date) || !Number.isFinite(deposit) || deposit < 0) continue;
+    const year = date.slice(0, 4);
+    const month = `${year}-${date.slice(4, 6)}`;
+    deposits.push(deposit);
+    dates.push(date);
+    if (!monthlyValues.has(month)) monthlyValues.set(month, []);
+    monthlyValues.get(month).push(deposit);
+    if (!yearlyValues.has(year)) yearlyValues.set(year, []);
+    yearlyValues.get(year).push(deposit);
+
+    const area = Number(row.area_sqm);
+    if (Number.isFinite(area) && area > 0) perSqmValues.push(deposit / area);
+  }
+
+  const years = [...yearlyValues.keys()].sort();
+  let yoy = null;
+  if (years.length >= 2) {
+    const previous = median(yearlyValues.get(years.at(-2)));
+    const current = median(yearlyValues.get(years.at(-1)));
+    if (previous && current != null) yoy = ((current - previous) / previous) * 100;
+  }
+
+  return {
+    district,
+    period: {
+      start: dates.length ? dates.reduce((a, b) => a < b ? a : b) : null,
+      end: dates.length ? dates.reduce((a, b) => a > b ? a : b) : null,
+      contract_years: years,
+    },
+    transaction_count: deposits.length,
+    median_deposit_manwon: median(deposits),
+    deposit_yoy_percent: yoy,
+    monthly_median_deposit: [...monthlyValues.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, values]) => ({ month, median_deposit_manwon: median(values) })),
+    yearly_transaction_count: years.map((year) => ({
+      year,
+      count: yearlyValues.get(year).length,
+    })),
+    median_deposit_per_sqm: median(perSqmValues),
+  };
+}
+
 function setLoading(isLoading) {
   document.body.classList.toggle('is-loading', isLoading);
   districtSelect.disabled = isLoading;
@@ -172,11 +234,7 @@ async function loadDistrict(district) {
   try {
     const records = await loadDistrictRecords(district);
     statusText.textContent = `${district} 자료 ${formatNumber(records.length)}건을 분석하고 있습니다.`;
-    const summary = await getJson('/api/summary', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ district, records }),
-    });
+    const summary = buildSummary(records, district);
     renderSummary(summary);
   } catch (error) {
     showError(error.message || '데이터를 불러오지 못했습니다.');
