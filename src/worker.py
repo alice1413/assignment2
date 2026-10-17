@@ -64,10 +64,10 @@ class Default(WorkerEntrypoint):
                 except Exception:
                     pass
                 return response
-            except SeoulApiError:
+            except SeoulApiError as error:
                 return json_error(
                     "SEOUL_API_ERROR",
-                    "서울시 데이터 조회에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+                    f"서울시 API 요청 실패: {error}",
                     502,
                 )
             except Exception:
@@ -81,4 +81,3 @@ class Default(WorkerEntrypoint):
             return json_error("NOT_FOUND", "요청한 API 경로를 찾을 수 없습니다.", 404)
 
         return await self.env.ASSETS.fetch(request)
-
