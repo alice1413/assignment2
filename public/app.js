@@ -1,4 +1,5 @@
 const districtSelect = document.querySelector('#district-select');
+let dashboardData = null;
 const statusText = document.querySelector('#status-text');
 const updatedAt = document.querySelector('#updated-at');
 const emptyState = document.querySelector('#empty-state');
@@ -32,109 +33,11 @@ async function getJson(url, options = {}) {
   return body;
 }
 
-const API_PAGE_SIZE = 1000;
-const PAGE_FETCH_CONCURRENCY = 4;
-
-async function loadDistrictRecords(district) {
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear - 2, currentYear - 1, currentYear];
-  statusText.textContent = '연도별 거래 자료의 양을 확인하고 있습니다.';
-
-  const firstPages = await Promise.all(years.map((year) =>
-    getJson(`/api/records?district=${encodeURIComponent(district)}&year=${year}&start=1`)
-  ));
-  const records = firstPages.flatMap((page) => page.records || []);
-  const pending = [];
-  for (const page of firstPages) {
-    for (let start = API_PAGE_SIZE + 1; start <= page.total; start += API_PAGE_SIZE) {
-      pending.push({ year: page.year, start });
-    }
-  }
-
-  const totalPages = firstPages.length + pending.length;
-  let completed = firstPages.length;
-  statusText.textContent = `${district} 아파트 전세 자료 수집 중 · ${completed}/${totalPages} 페이지`;
-
-  for (let index = 0; index < pending.length; index += PAGE_FETCH_CONCURRENCY) {
-    const batch = pending.slice(index, index + PAGE_FETCH_CONCURRENCY);
-    const pages = await Promise.all(batch.map(({ year, start }) =>
-      getJson(`/api/records?district=${encodeURIComponent(district)}&year=${year}&start=${start}`)
-    ));
-    for (const page of pages) records.push(...(page.records || []));
-    completed += pages.length;
-    statusText.textContent = `${district} 아파트 전세 자료 수집 중 · ${completed}/${totalPages} 페이지`;
-  }
-
-  return records;
-}
-
-function median(values) {
-  if (!values.length) return null;
-  const ordered = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(ordered.length / 2);
-  return ordered.length % 2
-    ? ordered[middle]
-    : (ordered[middle - 1] + ordered[middle]) / 2;
-}
-
-function buildSummary(records, district) {
-  const monthlyValues = new Map();
-  const yearlyValues = new Map();
-  const perSqmValues = [];
-  const deposits = [];
-  const dates = [];
-
-  for (const row of records) {
-    const date = String(row.contract_date || '');
-    const deposit = Number(row.deposit_manwon);
-    if (!/^\d{8}$/.test(date) || !Number.isFinite(deposit) || deposit < 0) continue;
-    const year = date.slice(0, 4);
-    const month = `${year}-${date.slice(4, 6)}`;
-    deposits.push(deposit);
-    dates.push(date);
-    if (!monthlyValues.has(month)) monthlyValues.set(month, []);
-    monthlyValues.get(month).push(deposit);
-    if (!yearlyValues.has(year)) yearlyValues.set(year, []);
-    yearlyValues.get(year).push(deposit);
-
-    const area = Number(row.area_sqm);
-    if (Number.isFinite(area) && area > 0) perSqmValues.push(deposit / area);
-  }
-
-  const years = [...yearlyValues.keys()].sort();
-  let yoy = null;
-  if (years.length >= 2) {
-    const previous = median(yearlyValues.get(years.at(-2)));
-    const current = median(yearlyValues.get(years.at(-1)));
-    if (previous && current != null) yoy = ((current - previous) / previous) * 100;
-  }
-
-  return {
-    district,
-    period: {
-      start: dates.length ? dates.reduce((a, b) => a < b ? a : b) : null,
-      end: dates.length ? dates.reduce((a, b) => a > b ? a : b) : null,
-      contract_years: years,
-    },
-    transaction_count: deposits.length,
-    median_deposit_manwon: median(deposits),
-    deposit_yoy_percent: yoy,
-    monthly_median_deposit: [...monthlyValues.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([month, values]) => ({ month, median_deposit_manwon: median(values) })),
-    yearly_transaction_count: years.map((year) => ({
-      year,
-      count: yearlyValues.get(year).length,
-    })),
-    median_deposit_per_sqm: median(perSqmValues),
-  };
-}
-
 function setLoading(isLoading) {
   document.body.classList.toggle('is-loading', isLoading);
   districtSelect.disabled = isLoading;
   if (isLoading) {
-    statusText.textContent = '선택한 자치구의 거래 자료를 불러오는 중입니다.';
+    statusText.textContent = '미리 계산된 자치구 자료를 불러오는 중입니다.';
     emptyState.hidden = true;
     monthlyChart.innerHTML = '<div class="empty-chart">차트를 준비하고 있습니다…</div>';
     yearlyChart.innerHTML = '<div class="empty-chart">차트를 준비하고 있습니다…</div>';
@@ -226,18 +129,20 @@ function renderSummary(summary) {
   const first = summary.period.start?.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1.$2.$3');
   const last = summary.period.end?.replace(/^(\d{4})(\d{2})(\d{2})$/, '$1.$2.$3');
   statusText.textContent = hasData ? `${summary.district} · 자료 기간 ${first} — ${last}` : `${summary.district} · 조회 결과 거래 자료 없음`;
-  updatedAt.textContent = `조회 ${new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}`;
+  updatedAt.textContent = dashboardData?.generated_at
+    ? `자료 기준 ${new Intl.DateTimeFormat('ko-KR', { dateStyle: 'medium' }).format(new Date(dashboardData.generated_at))}`
+    : '';
 }
 
 async function loadDistrict(district) {
   setLoading(true);
   try {
-    const records = await loadDistrictRecords(district);
-    statusText.textContent = `${district} 자료 ${formatNumber(records.length)}건을 분석하고 있습니다.`;
-    const summary = buildSummary(records, district);
+    if (!dashboardData) dashboardData = await getJson('/data/dashboard-summary.json');
+    const summary = dashboardData.districts?.[district];
+    if (!summary) throw new Error('선택한 자치구의 사전 집계 자료가 없습니다.');
     renderSummary(summary);
   } catch (error) {
-    showError(error.message || '데이터를 불러오지 못했습니다.');
+    showError(error.message || '자료를 불러오지 못했습니다.');
   } finally {
     document.body.classList.remove('is-loading');
     districtSelect.disabled = false;
@@ -246,7 +151,9 @@ async function loadDistrict(district) {
 
 async function startApp() {
   try {
-    const { districts } = await getJson('/api/districts');
+    dashboardData = await getJson('/data/dashboard-summary.json');
+    const districts = Object.keys(dashboardData.districts || {});
+    if (!districts.length) throw new Error('사전 집계 자료가 비어 있습니다.');
     districtSelect.replaceChildren(...districts.map((district) => {
       const option = document.createElement('option');
       option.value = district;
@@ -258,10 +165,10 @@ async function startApp() {
     const initial = new URLSearchParams(window.location.search).get('district');
     const district = districts.includes(initial) ? initial : '마포구';
     districtSelect.value = district;
-    await loadDistrict(district);
+    renderSummary(dashboardData.districts[district]);
   } catch (error) {
     districtSelect.disabled = true;
-    showError(error.message || '자치구 목록을 불러오지 못했습니다.');
+    showError(error.message || '사전 집계 자료를 불러오지 못했습니다.');
   }
 }
 
