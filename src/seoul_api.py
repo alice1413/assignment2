@@ -37,6 +37,7 @@ async def _request_page(api_key: str, start: int, end: int, district: str) -> di
         status = int(response.status)
         body = str(await response.text())
     except Exception as error:
+        # Do not include the request URL or exception text here; it may contain the API key.
         raise SeoulApiError("서울시 OpenAPI에 연결할 수 없습니다.") from error
 
     if status < 200 or status >= 300:
@@ -55,7 +56,9 @@ async def _request_page(api_key: str, start: int, end: int, district: str) -> di
     if result.get("CODE") == "INFO-200":
         return {"total": 0, "rows": []}
     if result.get("CODE") != "INFO-000":
-        raise SeoulApiError("서울시 OpenAPI가 오류를 반환했습니다.")
+        code = str(result.get("CODE", "UNKNOWN"))
+        # Only include the provider's result code; never echo request data or credentials.
+        raise SeoulApiError(f"서울시 OpenAPI 오류 코드: {code}")
     if "list_total_count" not in service:
         raise SeoulApiError("서울시 OpenAPI 응답에 전체 건수가 없습니다.")
     try:
@@ -125,4 +128,3 @@ async def fetch_rent_records(api_key: str, district: str) -> list[dict]:
         start = end + 1
 
     return records
-
