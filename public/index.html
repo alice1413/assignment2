@@ -30,13 +30,11 @@
             </button>
           </nav>
         </div>
-        <div class="sidebar-note">
-          <span class="note-dot" aria-hidden="true"></span>
-          <div><strong>서울 아파트 전세</strong><small>최근 3년 사전 집계 자료</small></div>
-        </div>
         <div class="sidebar-bottom">
           <p class="sidebar-label">DATA SOURCE</p>
-          <p>서울시 열린데이터광장<br>부동산 전월세가 정보</p>
+          <p class="source-name">서울시 열린데이터광장</p>
+          <p>부동산 전월세가 정보<br>아파트 전세 · 최근 3년</p>
+          <span>사전 집계 자료</span>
           <span id="sidebar-period">자료 준비 중</span>
         </div>
       </aside>
@@ -102,7 +100,7 @@
               <article class="panel panel-table">
                 <div class="panel-heading">
                   <div><p class="panel-kicker">DISTRICT OVERVIEW</p><h2>자치구별 전세 시장</h2><p class="panel-description">보증금 중앙값 기준 · 높은 순</p></div>
-                  <button class="text-button" type="button" data-go-view="analysis">구별 분석 보기 <span aria-hidden="true">→</span></button>
+                  <button class="text-button" id="ranking-toggle" type="button">전체 25개 보기 <span aria-hidden="true">→</span></button>
                 </div>
                 <div class="table-scroll">
                   <table>

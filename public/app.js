@@ -4,6 +4,7 @@ const navItems = [...document.querySelectorAll('[data-view]')];
 const viewPanels = [...document.querySelectorAll('.view-panel')];
 const districtSelect = document.querySelector('#district-select');
 let dashboardData = null;
+let showAllDistricts = false;
 
 async function getJson(url) {
   const response = await fetch(url, { headers: { Accept: 'application/json' } });
@@ -132,7 +133,8 @@ function renderDistrictRanking(districts) {
   const body = document.querySelector('#district-ranking');
   const rows = Object.values(districts).sort((a, b) => (b.median_deposit_manwon || 0) - (a.median_deposit_manwon || 0));
   body.replaceChildren();
-  rows.forEach((district, index) => {
+  const visibleRows = showAllDistricts ? rows : rows.slice(0, 12);
+  visibleRows.forEach((district, index) => {
     const row = document.createElement('tr');
     const name = document.createElement('td');
     name.className = 'district-name';
@@ -152,6 +154,11 @@ function renderDistrictRanking(districts) {
     row.append(name, deposit, count, change);
     body.append(row);
   });
+  const toggle = document.querySelector('#ranking-toggle');
+  toggle.hidden = rows.length <= 12;
+  toggle.innerHTML = showAllDistricts
+    ? '상위 12개만 보기 <span aria-hidden="true">↑</span>'
+    : '전체 25개 보기 <span aria-hidden="true">→</span>';
 }
 
 function renderDashboard(data) {
@@ -209,7 +216,10 @@ function showError(message) {
 
 function bindNavigation() {
   navItems.forEach((item) => item.addEventListener('click', () => setView(item.dataset.view)));
-  document.querySelectorAll('[data-go-view]').forEach((button) => button.addEventListener('click', () => setView(button.dataset.goView)));
+  document.querySelector('#ranking-toggle').addEventListener('click', () => {
+    showAllDistricts = !showAllDistricts;
+    renderDistrictRanking(dashboardData.districts || {});
+  });
   districtSelect.addEventListener('change', () => renderAnalysis(districtSelect.value));
   document.querySelector('#sidebar-toggle').addEventListener('click', (event) => {
     const opened = document.body.classList.toggle('sidebar-open');
